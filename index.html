@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>TechGuard USP — Unified Service Platform</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --sf-blue: #0176D3;
+    --sf-blue-dark: #032E61;
+    --sf-blue-light: #EAF5FE;
+    --agentforce: #FF5A36;
+    --agentforce-light: #FFF1ED;
+    --slack-purple: #4A154B;
+    --slack-aubergine: #350D36;
+    --success: #2E844A;
+    --warning: #FE9339;
+    --danger: #BA0517;
+    --slate: #032D60;
+  }
+  html, body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+  code, .mono { font-family: 'JetBrains Mono', monospace; }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  .view { display: none; }
+  .view.active { display: block; }
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(255,90,54,0.6); }
+    70% { box-shadow: 0 0 0 12px rgba(255,90,54,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,90,54,0); }
+  }
+  .pulse-ring { animation: pulse-ring 2s infinite; }
+  @keyframes thinking {
+    0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+  .thinking-dot { display: inline-block; width: 6px; height: 6px; margin: 0 2px; border-radius: 50%; background: var(--agentforce); animation: thinking 1.4s infinite; }
+  .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+  .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .slide-up { animation: slideUp 0.3s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .fade-in { animation: fadeIn 0.4s ease-out; }
+  .gradient-bg {
+    background: linear-gradient(135deg, #0176D3 0%, #032E61 100%);
+  }
+  .gradient-agent {
+    background: linear-gradient(135deg, #FF5A36 0%, #BA0517 100%);
+  }
+  .glass {
+    backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.85);
+  }
+  .hover-lift { transition: transform 0.2s, box-shadow 0.2s; }
+  .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -8px rgba(3,46,97,0.18); }
+  .handoff-arrow {
+    position: relative;
+  }
+  .handoff-arrow::after {
+    content: '→';
+    position: absolute;
+    right: -22px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--agentforce);
+    font-weight: 700;
+    font-size: 18px;
+  }
+  /* iPhone frame */
+  .phone-frame {
+    width: 380px;
+    height: 780px;
+    border-radius: 50px;
+    background: #0a0a0a;
+    padding: 12px;
+    box-shadow: 0 30px 60px -15px rgba(3,46,97,0.4), 0 0 0 1px rgba(255,255,255,0.05) inset;
+    position: relative;
+  }
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    border-radius: 38px;
+    background: white;
+    overflow: hidden;
+    position: relative;
+  }
+  .phone-notch {
+    position: absolute;
+    top: 12px; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 28px;
+    background: #0a0a0a;
+    border-radius: 14px;
+    z-index: 50;
+  }
+  /* Horizon badges */
+  .badge-h1 { background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; }
+  .badge-h2 { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+  .badge-h3 { background: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE; }
+  /* Slack-style sidebar */
+  .slack-sidebar {
+    background: var(--slack-aubergine);
+    color: white;
+  }
+  .slack-channel:hover { background: rgba(255,255,255,0.1); }
+  .slack-channel.active { background: #1264a3; color: white; }
+  /* Network graph node */
+  .graph-node {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid;
+    background: white;
+    position: absolute;
+  }
+  .timeline-dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 3px solid white;
+    position: absolute;
+    left: -7px;
+    box-shadow: 0 0 0 2px;
+  }
+  /* Demo controls */
+  .demo-step.active .timeline-dot { background: var(--agentforce); box-shadow: 0 0 0 4px rgba(255,90,54,0.2); }
+  .demo-step.completed .timeline-dot { background: var(--success); box-shadow: 0 0 0 2px rgba(46,132,74,0.2); }
+  .demo-step.pending .timeline-dot { background: #e2e8f0; box-shadow: 0 0 0 2px #e2e8f0; }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+<!-- ========================================= -->
+<!--               TOP NAVIGATION              -->
+<!-- ========================================= -->
+<nav class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+  <div class="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg gradient-bg flex items-center justify-center">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <div>
+        <div class="font-bold text-slate-900 leading-tight">TechGuard USP</div>
+        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Unified Service Platform · Built on Salesforce Agentforce</div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-1">
+      <button onclick="nav('home')" data-nav="home" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Home</button>
+      <button onclick="nav('maya')" data-nav="maya" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">
+        <span class="inline-flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-500"></span>Maya · CSA</span>
+      </button>
+      <button onclick="nav('rohan')" data-nav="rohan" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">
+        <span class="inline-flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-purple-500"></span>Rohan · ITOps</span>
+      </button>
+      <button onclick="nav('maria')" data-nav="maria" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">
+        <span class="inline-flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>Maria · Field</span>
+      </button>
+      <button onclick="nav('demo')" data-nav="demo" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium gradient-agent text-white shadow-sm hover:opacity-90">
+        ▶ Canonical Demo
+      </button>
+      <button onclick="nav('metrics')" data-nav="metrics" class="nav-btn px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">Metrics & Architecture</button>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 text-xs">
+        <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span>
+        <span class="text-slate-600">Endpoint Graph: <span class="font-semibold text-slate-900">2,043,891 endpoints live</span></span>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ========================================= -->
+<!--                HOME VIEW                  -->
+<!-- ========================================= -->
+<div id="view-home" class="view active">
+  <div class="max-w-[1600px] mx-auto px-6 py-8">
+
+    <!-- HERO -->
+    <div class="gradient-bg rounded-3xl p-12 text-white relative overflow-hidden">
+      <div class="absolute -top-12 -right-12 w-64 h-64 rounded-full bg-white/5"></div>
+      <div class="absolute -bottom-20 -right-32 w-96 h-96 rounded-full bg-white/5"></div>
+      <div class="relative max-w-3xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-xs font-medium mb-4">
+          <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+          AGENTIC AI · IT SERVICE RE-PLATFORM
+        </div>
+        <h1 class="text-5xl font-bold leading-tight mb-4">The agentic operating system for managed IT services.</h1>
+        <p class="text-xl text-blue-100 mb-8">From portal-to-ticket to agent-to-outcome. Across 2M endpoints, 15K clients, and every persona — one platform that detects, decides, dispatches, and documents autonomously.</p>
+        <div class="flex gap-3">
+          <button onclick="nav('demo')" class="bg-white text-blue-900 px-6 py-3 rounded-lg font-semibold text-sm hover:bg-blue-50 flex items-center gap-2">
+            ▶ Start Canonical Demo <span class="text-xs font-normal text-blue-600">(Predictive failure · 90 sec)</span>
+          </button>
+          <button onclick="nav('metrics')" class="bg-white/15 text-white px-6 py-3 rounded-lg font-semibold text-sm hover:bg-white/25 backdrop-blur">
+            View Architecture & Metrics
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE STATS STRIP -->
+    <div class="grid grid-cols-4 gap-4 mt-6">
+      <div class="bg-white rounded-2xl p-5 border border-slate-200">
+        <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">North Star · AROE</div>
+        <div class="flex items-baseline gap-2 mt-1">
+          <div class="text-3xl font-bold text-slate-900" id="aroe-counter">87.4</div>
+          <div class="text-xs text-emerald-600 font-semibold">↑ 14% MoM</div>
+        </div>
+        <div class="text-xs text-slate-500 mt-1">Autonomous Resolved Outcomes per 1K endpoints/month</div>
+      </div>
+      <div class="bg-white rounded-2xl p-5 border border-slate-200">
+        <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">Autonomous Resolution</div>
+        <div class="flex items-baseline gap-2 mt-1">
+          <div class="text-3xl font-bold text-slate-900">62%</div>
+          <div class="text-xs text-emerald-600 font-semibold">↑ from 11% baseline</div>
+        </div>
+        <div class="text-xs text-slate-500 mt-1">of inbound contacts resolved without human touch</div>
+      </div>
+      <div class="bg-white rounded-2xl p-5 border border-slate-200">
+        <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">Proactive Coverage</div>
+        <div class="flex items-baseline gap-2 mt-1">
+          <div class="text-3xl font-bold text-slate-900">27%</div>
+          <div class="text-xs text-emerald-600 font-semibold">↑ Y1 target met</div>
+        </div>
+        <div class="text-xs text-slate-500 mt-1">incidents prevented before client awareness</div>
+      </div>
+      <div class="bg-white rounded-2xl p-5 border border-slate-200">
+        <div class="text-xs font-medium text-slate-500 uppercase tracking-wider">Client Trust Index</div>
+        <div class="flex items-baseline gap-2 mt-1">
+          <div class="text-3xl font-bold text-slate-900">+9</div>
+          <div class="text-xs text-emerald-600 font-semibold">NPS pts above baseline</div>
+        </div>
+        <div class="text-xs text-slate-500 mt-1">composite of CSAT, NPS, SLA adherence</div>
+      </div>
+    </div>
+
+    <!-- THREE PERSONA CARDS -->
+    <div class="mt-10">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">Three personas. One platform. Zero context loss at handoffs.</h2>
+          <p class="text-sm text-slate-600 mt-1">Click into any persona's surface to see their daily workspace under USP. The same Endpoint Graph powers all three.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-5">
+        <!-- Maya card -->
+        <button onclick="nav('maya')" class="text-left bg-white rounded-2xl p-6 border border-slate-200 hover-lift">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-2xl">👩🏽‍💻</div>
+            <div>
+              <div class="font-bold text-slate-900">Maya · CSA</div>
+              <div class="text-xs text-slate-500">Frontline · Service Cloud Console</div>
+            </div>
+          </div>
+          <p class="text-sm text-slate-700 mb-4">Inbound technical inquiries from B2B clients. Today: tool-swivel across 4-5 portals to diagnose. Tomorrow: agent has pre-resolved before she answers the call.</p>
+          <div class="flex flex-wrap gap-1.5 mb-3">
+            <span class="text-xs px-2 py-0.5 rounded badge-h1 font-medium">H1 · Frontline Copilot</span>
+            <span class="text-xs px-2 py-0.5 rounded badge-h1 font-medium">H1 · Top-20 Use Cases</span>
+            <span class="text-xs px-2 py-0.5 rounded badge-h2 font-medium">H2 · Agentforce Voice</span>
+          </div>
+          <div class="text-xs text-blue-600 font-semibold flex items-center gap-1">Enter Maya's workspace →</div>
+        </button>
+
+        <!-- Rohan card -->
+        <button onclick="nav('rohan')" class="text-left bg-white rounded-2xl p-6 border border-slate-200 hover-lift">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-2xl">🧑🏽‍🔧</div>
+            <div>
+              <div class="font-bold text-slate-900">Rohan · ITOps</div>
+              <div class="text-xs text-slate-500">Backend · Slack + Telemetry Console</div>
+            </div>
+          </div>
+          <p class="text-sm text-slate-700 mb-4">Deep escalations + infrastructure telemetry across CCTV, Cloud, Connectivity. Today: alert fatigue. Tomorrow: agent decomposes plans; he approves and learns.</p>
+          <div class="flex flex-wrap gap-1.5 mb-3">
+            <span class="text-xs px-2 py-0.5 rounded badge-h1 font-medium">H1 · Backend Triage Agent</span>
+            <span class="text-xs px-2 py-0.5 rounded badge-h2 font-medium">H2 · Predictive Maintenance</span>
+            <span class="text-xs px-2 py-0.5 rounded badge-h2 font-medium">H2 · Cross-Domain RCA</span>
+            <span class="text-xs px-2 py-0.5 rounded badge-h3 font-medium">H3 · Federated Learning</span>
+          </div>
+          <div class="text-xs text-blue-600 font-semibold flex items-center gap-1">Enter Rohan's workspace →</div>
+        </button>
+
+        <!-- Maria card -->
+        <button onclick="nav('maria')" class="text-left bg-white rounded-2xl p-6 border border-slate-200 hover-lift">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-2xl">👷🏽‍♀️</div>
+            <div>
+              <div class="font-bold text-slate-900">Maria · Field Tech</div>
+              <div class="text-xs text-slate-500">On-site · Field Service Mobile</div>
+            </div>
+          </div>
+          <p class="text-sm text-slate-700 mb-4">Dispatched to sites for CCTV, AP, and network repairs. Today: 25% wrong-part trips. Tomorrow: pre-staged parts, AR-overlay procedure, voice-doc reports.</p>
+          <div class="flex flex-wrap gap-1.5 mb-3">
+            <span class="text-xs px-2 py-0.5 rounded badge-h1 font-medium">H1 · Mobile Companion + AR</span>
+            <span class="text-xs px-2 py-0.5 rounded badge-h1 font-medium">H1 · Voice Documentation</span>
+            <span class="text-xs px-2 py-0.5 rounded badge-h2 font-medium">H2 · Auto-Dispatch</span>
+            <span class="text-xs px-2 py-0.5 rounded badge-h3 font-medium">H3 · Self-Healing Closed Loop</span>
+          </div>
+          <div class="text-xs text-blue-600 font-semibold flex items-center gap-1">Enter Maria's workspace →</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- HORIZON ROADMAP STRIP -->
+    <div class="mt-10 bg-white rounded-2xl p-8 border border-slate-200">
+      <h3 class="text-xl font-bold text-slate-900 mb-1">The 36-month re-platforming</h3>
+      <p class="text-sm text-slate-600 mb-6">Three horizons. Augmentation → Autonomy → Proactive Outcome Platform.</p>
+      <div class="grid grid-cols-3 gap-6">
+        <div class="border-2 border-emerald-200 rounded-xl p-5 bg-emerald-50/40">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Horizon 1 · Year 1</div>
+            <span class="text-xs px-2 py-0.5 rounded badge-h1 font-bold">H1</span>
+          </div>
+          <div class="font-bold text-slate-900 mb-2">Augmented Service</div>
+          <p class="text-xs text-slate-700 mb-3">AI in the loop, humans close the loop. Build the substrate.</p>
+          <ul class="text-xs text-slate-700 space-y-1">
+            <li>• Endpoint Graph v1 (Data Cloud)</li>
+            <li>• Frontline Copilot (Maya)</li>
+            <li>• Backend Triage Agent (Rohan)</li>
+            <li>• Field Mobile Companion (Maria)</li>
+            <li>• Top-20 Use Case Library</li>
+            <li>• Trust & Audit Layer v1</li>
+          </ul>
+        </div>
+        <div class="border-2 border-amber-200 rounded-xl p-5 bg-amber-50/40">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-bold text-amber-700 uppercase tracking-wider">Horizon 2 · Year 2</div>
+            <span class="text-xs px-2 py-0.5 rounded badge-h2 font-bold">H2</span>
+          </div>
+          <div class="font-bold text-slate-900 mb-2">Autonomous Service</div>
+          <p class="text-xs text-slate-700 mb-3">From answer to action. Predictive layer goes live.</p>
+          <ul class="text-xs text-slate-700 space-y-1">
+            <li>• Autonomous Action Library (100+)</li>
+            <li>• Blast-Radius Classifier</li>
+            <li>• Cross-Domain RCA Agent</li>
+            <li>• Predictive Maintenance v1</li>
+            <li>• Per-Client Trust Dial</li>
+            <li>• Agentforce Voice + Auto-Dispatch</li>
+          </ul>
+        </div>
+        <div class="border-2 border-purple-200 rounded-xl p-5 bg-purple-50/40">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-bold text-purple-700 uppercase tracking-wider">Horizon 3 · Years 3-5</div>
+            <span class="text-xs px-2 py-0.5 rounded badge-h3 font-bold">H3</span>
+          </div>
+          <div class="font-bold text-slate-900 mb-2">Outcome Platform</div>
+          <p class="text-xs text-slate-700 mb-3">Reframe the category. Outcome-based pricing. TechGuard becomes a platform.</p>
+          <ul class="text-xs text-slate-700 space-y-1">
+            <li>• Outcome-Based Pricing Engine</li>
+            <li>• Federated Cross-Tenant Learning</li>
+            <li>• Self-Healing Closed Loop</li>
+            <li>• Agentic Pre-Sales / Site Survey</li>
+            <li>• Vertical Agent Marketplace</li>
+            <li>• USP-as-a-Platform (MSP white-label)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEMO GUIDE -->
+    <div class="mt-10 bg-slate-900 rounded-2xl p-8 text-white">
+      <div class="flex items-start justify-between">
+        <div class="max-w-2xl">
+          <div class="text-xs font-bold uppercase tracking-wider text-orange-400 mb-2">Panel demo · suggested path · ~7 minutes</div>
+          <h3 class="text-2xl font-bold mb-3">How to walk this prototype</h3>
+          <ol class="space-y-3 text-sm text-slate-200">
+            <li class="flex gap-3"><span class="font-bold text-orange-400">1.</span><span><b>Start here.</b> Set the thesis: portal-to-ticket is dying. USP is how TechGuard re-platforms. (30s)</span></li>
+            <li class="flex gap-3"><span class="font-bold text-orange-400">2.</span><span><b>Canonical Demo.</b> Walk the predictive-failure journey end-to-end. All three personas. Three AI-to-human handoffs. (3 min)</span></li>
+            <li class="flex gap-3"><span class="font-bold text-orange-400">3.</span><span><b>Maya → Rohan → Maria.</b> One minute each on the day-to-day workspace. (3 min)</span></li>
+            <li class="flex gap-3"><span class="font-bold text-orange-400">4.</span><span><b>Metrics & Architecture.</b> The three-layer architecture, AROE math, horizon roadmap. (1 min)</span></li>
+          </ol>
+        </div>
+        <div class="text-right">
+          <button onclick="nav('demo')" class="gradient-agent text-white px-5 py-3 rounded-lg font-semibold text-sm shadow-lg pulse-ring">▶ Start with Canonical Demo</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========================================= -->
+<!--           MAYA — CSA WORKSPACE            -->
+<!-- ========================================= -->
+<div id="view-maya" class="view">
+  <div class="bg-white border-b border-slate-200">
+    <div class="max-w-[1600px] mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-xl">👩🏽‍💻</div>
+        <div>
+          <div class="font-bold text-slate-900">Maya · Customer Service Agent (Frontline)</div>
+          <div class="text-xs text-slate-500">Surface: Salesforce Service Cloud Console + Slack · Persona pain: tool-swivel, KB freshness, escalation context loss</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 text-xs">
+        <span class="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold">● Live · 14 calls handled today</span>
+        <span class="text-slate-500">AHT: <b class="text-slate-900">3m 12s</b> (–28% vs. baseline)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-[1600px] mx-auto px-6 py-5 grid grid-cols-12 gap-4">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="col-span-2 space-y-3">
+      <div class="bg-white rounded-xl p-3 border border-slate-200">
+        <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Queue</div>
+        <div class="space-y-1.5">
+          <div class="px-2 py-2 rounded-lg bg-blue-50 border border-blue-200 text-xs">
+            <div class="font-semibold text-blue-900 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-red-500 pulse-ring"></span>Active call</div>
+            <div class="text-blue-700 mt-0.5">Retail Co · CCTV</div>
+          </div>
+          <div class="px-2 py-2 rounded-lg hover:bg-slate-50 text-xs cursor-pointer">
+            <div class="font-semibold text-slate-700">In queue (3)</div>
+            <div class="text-slate-500 mt-0.5">Avg wait 22s</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-3 border border-slate-200">
+        <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">My agents</div>
+        <div class="space-y-1.5 text-xs">
+          <div class="flex items-center gap-2 px-2 py-1.5 rounded bg-orange-50 border border-orange-200">
+            <span class="w-1.5 h-1.5 rounded-full bg-orange-500 pulse-ring"></span>
+            <span class="font-medium text-orange-900">Triage Agent</span>
+            <span class="text-orange-600 ml-auto">●</span>
+          </div>
+          <div class="flex items-center gap-2 px-2 py-1.5 rounded text-slate-600">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>KB Retrieval</span>
+          </div>
+          <div class="flex items-center gap-2 px-2 py-1.5 rounded text-slate-600">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>Diagnostic Agent</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-3 border border-slate-200">
+        <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Today</div>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between"><span class="text-slate-600">Handled</span><span class="font-semibold">14</span></div>
+          <div class="flex justify-between"><span class="text-slate-600">Auto-resolved</span><span class="font-semibold text-emerald-600">9</span></div>
+          <div class="flex justify-between"><span class="text-slate-600">FCR</span><span class="font-semibold">86%</span></div>
+          <div class="flex justify-between"><span class="text-slate-600">CSAT</span><span class="font-semibold">4.8 / 5</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER PANEL — Active call -->
+    <div class="col-span-6 space-y-4">
+
+      <!-- Incoming call card -->
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-3 flex items-center justify-between text-white">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg">📞</div>
+            <div>
+              <div class="font-bold">Active Call · Retail Co. (Acme Retail Holdings)</div>
+              <div class="text-xs text-blue-100">+1 555 0142 · Caller: Marcus Chen, IT Operations Lead · Verified ✓</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-2xl font-bold mono" id="call-timer">02:14</div>
+            <div class="text-xs text-blue-100">Call duration</div>
+          </div>
+        </div>
+
+        <!-- Pre-populated context strip -->
+        <div class="px-5 py-3 bg-blue-50 border-b border-blue-100">
+          <div class="text-xs font-bold uppercase tracking-wider text-blue-700 mb-2 flex items-center gap-2">
+            <span>⚡ Pre-populated context from Endpoint Graph</span>
+            <span class="text-[10px] px-2 py-0.5 rounded badge-h1 font-medium">H1</span>
+          </div>
+          <div class="grid grid-cols-4 gap-3 text-xs">
+            <div>
+              <div class="text-slate-500">Tier</div>
+              <div class="font-semibold text-slate-900">Platinum · $480K ARR</div>
+            </div>
+            <div>
+              <div class="text-slate-500">Endpoints under mgmt</div>
+              <div class="font-semibold text-slate-900">847 (CCTV: 412 · Cloud: 12 · AP: 423)</div>
+            </div>
+            <div>
+              <div class="text-slate-500">SLA</div>
+              <div class="font-semibold text-emerald-700">P1: 15min · P2: 2hr · ✓ in compliance</div>
+            </div>
+            <div>
+              <div class="text-slate-500">Last contact</div>
+              <div class="font-semibold text-slate-900">3 days ago · CCTV (resolved)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live transcript -->
+        <div class="px-5 py-4 space-y-3 max-h-72 overflow-y-auto scrollbar-thin">
+          <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Live transcript · Voice → Text</div>
+          <div class="flex gap-3">
+            <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs flex-shrink-0">MC</div>
+            <div class="bg-slate-100 rounded-lg px-3 py-2 text-sm">
+              "Hi, we can't see the live feed from our Site 4 store in Cincinnati. Cameras have been black for about 20 minutes."
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-xs flex-shrink-0">M</div>
+            <div class="bg-blue-50 rounded-lg px-3 py-2 text-sm">
+              "Hi Marcus, I'm looking at Site 4 right now. Give me one second."
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-xs flex-shrink-0">🤖</div>
+            <div class="bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 text-sm flex-1">
+              <div class="text-xs font-bold uppercase tracking-wider text-orange-700 mb-1 flex items-center gap-2">
+                Triage Agent · resolution ready
+                <span class="text-[10px] px-1.5 py-0.5 rounded badge-h1 font-medium">H1</span>
+              </div>
+              <div class="text-slate-900">Diagnosis complete · AP at Site 4 dropped 23 minutes ago. Restart attempted at 14:32. <b class="text-emerald-700">Restart succeeded. Live feed restored 89 seconds ago.</b> Confidence: 94%.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agent Assist panel -->
+      <div class="bg-white rounded-2xl border border-slate-200">
+        <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+          <div class="font-bold text-slate-900 flex items-center gap-2">🪄 Agent Assist <span class="text-[10px] px-2 py-0.5 rounded badge-h1 font-medium">H1 · Frontline Copilot</span></div>
+          <div class="text-xs text-slate-500">Updated 12s ago · <span class="text-emerald-600 font-semibold">✓ grounded</span></div>
+        </div>
+
+        <div class="p-5 space-y-4">
+
+          <!-- Recommended response -->
+          <div>
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Recommended next utterance</div>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+              <div class="text-sm text-slate-900">"Good news Marcus — I can already see the issue. Your Site 4 access point dropped 23 minutes ago. Our system caught it and auto-restarted the device about 90 seconds ago. I'm watching the feed now and it's back live. Want me to walk you through what I'm seeing on my side, or is there anything else?"</div>
+              <div class="mt-3 flex gap-2">
+                <button class="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-md font-semibold hover:bg-emerald-700">Use response</button>
+                <button class="text-xs bg-white border border-slate-200 text-slate-700 px-3 py-1.5 rounded-md font-semibold hover:bg-slate-50">Edit</button>
+                <button class="text-xs bg-white border border-slate-200 text-slate-700 px-3 py-1.5 rounded-md font-semibold hover:bg-slate-50">Suggest different tone</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- What the agent already did -->
+          <div>
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-2">What the Triage Agent already did <span class="text-[10px] px-2 py-0.5 rounded badge-h1 font-medium">H1</span></div>
+            <div class="space-y-2">
+              <div class="flex items-start gap-3 text-sm">
+                <div class="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 text-emerald-700 text-xs">✓</div>
+                <div class="flex-1">
+                  <div class="text-slate-900">Identified caller via voice biometrics + Data Cloud · <span class="mono text-xs text-slate-500">8.2s</span></div>
+                </div>
+              </div>
+              <div class="flex items-start gap-3 text-sm">
+                <div class="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 text-emerald-700 text-xs">✓</div>
+                <div class="flex-1">
+                  <div class="text-slate-900">Ran 12-point CCTV health check across Site 4 · isolated AP failure as root cause</div>
+                </div>
+              </div>
+              <div class="flex items-start gap-3 text-sm">
+                <div class="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 text-emerald-700 text-xs">✓</div>
+                <div class="flex-1">
+                  <div class="text-slate-900">Cross-referenced 3 similar AP-firmware-related incidents in past 90d · same vendor batch</div>
+                </div>
+              </div>
+              <div class="flex items-start gap-3 text-sm">
+                <div class="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 text-emerald-700 text-xs">✓</div>
+                <div class="flex-1">
+                  <div class="text-slate-900">Executed restart action (blast-radius: low · auto-approved per Trust Dial) · live feed verified restored</div>
+                </div>
+              </div>
+              <div class="flex items-start gap-3 text-sm">
+                <div class="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 text-amber-700 text-xs">!</div>
+                <div class="flex-1">
+                  <div class="text-slate-900"><b>Flagged for Rohan (ITOps):</b> 3 incidents on same firmware batch in 90d · recommend pushing firmware patch tenant-wide</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top-20 Use Case match -->
+          <div class="bg-slate-50 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-1">
+              <div class="text-xs font-bold text-slate-700 flex items-center gap-2">Matched: Use Case #007 — AP Signal Drop, CCTV Upload Failure <span class="text-[10px] px-2 py-0.5 rounded badge-h1 font-medium">H1 · Top-20 Library</span></div>
+              <div class="text-xs text-slate-500">Resolved 1,247× tenant-wide · 96% accuracy</div>
+            </div>
+            <div class="text-xs text-slate-600">Avg resolution time: 1m 47s · Avg CSAT: 4.7/5 · KB article CSA-CCTV-007 (v2.4, freshness: 12d)</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL — Endpoint Graph context -->
+    <div class="col-span-4 space-y-4">
+
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div class="px-5 py-3 border-b border-slate-100">
+          <div class="font-bold text-slate-900 text-sm flex items-center gap-2">
+            🌐 Endpoint Graph · Acme Retail Holdings
+            <span class="text-[10px] px-2 py-0.5 rounded badge-h1 font-medium">H1 · Data Cloud</span>
+          </div>
+          <div class="text-xs text-slate-500 mt-0.5">Identity-resolved · zero-copy from CCTV vendor, SD-WAN, MDM</div>
+        </div>
+
+        <!-- Mini network graph -->
+        <div class="p-4 bg-slate-50 relative" style="height: 220px;">
+          <div class="graph-node border-blue-400" style="top: 24px; left: 50%; transform: translateX(-50%); width: 72px; height: 72px;">
+            <div class="text-center text-[10px]"><div class="text-base">🏢</div><div class="font-semibold mt-0.5">Retail Co</div></div>
+          </div>
+          <div class="graph-node border-emerald-400" style="top: 130px; left: 12%; width: 64px; height: 64px;">
+            <div class="text-center text-[10px]"><div class="text-base">📹</div><div class="font-semibold mt-0.5">CCTV<br/>412</div></div>
+          </div>
+          <div class="graph-node border-amber-400" style="top: 130px; left: 42%; width: 64px; height: 64px; box-shadow: 0 0 0 3px rgba(254,147,57,0.15);">
+            <div class="text-center text-[10px]"><div class="text-base">📡</div><div class="font-semibold mt-0.5">AP<br/>423</div></div>
+          </div>
+          <div class="graph-node border-blue-400" style="top: 130px; left: 72%; width: 64px; height: 64px;">
+            <div class="text-center text-[10px]"><div class="text-base">☁️</div><div class="font-semibold mt-0.5">Cloud<br/>12</div></div>
+          </div>
+          <!-- connecting lines -->
+          <svg class="absolute inset-0 pointer-events-none" width="100%" height="100%">
+            <line x1="50%" y1="60" x2="20%" y2="140" stroke="#cbd5e1" stroke-width="1.5"/>
+            <line x1="50%" y1="60" x2="50%" y2="140" stroke="#FE9339" stroke-width="2" stroke-dasharray="4 2"/>
+            <line x1="50%" y1="60" x2="80%" y2="140" stroke="#cbd5e1" stroke-width="1.5"/>
+            <line x1="20%" y1="170" x2="50%" y2="170" stroke="#FE9339" stroke-width="1.5" stroke-dasharray="3 3"/>
+          </svg>
+        </div>
+
+        <div class="px-5 py-3 border-t border-slate-100 text-xs space-y-1.5">
+          <div class="flex items-center justify-between"><span class="text-slate-600 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Site 4 · AP-OUTBR-04</span><span class="font-semibold text-amber-700">Recovered 89s ago</span></div>
+          <div class="flex items-center justify-between"><span class="text-slate-600 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Cross-domain impact</span><span class="font-semibold text-slate-900">12 CCTV streams affected · resolved</span></div>
+          <div class="flex items-center justify-between"><span class="text-slate-600 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Other sites</span><span class="font-semibold text-emerald-700">All healthy</span></div>
+        </div>
+      </div>
+
+      <!-- Auto-drafted wrap-up -->
+      <div class="bg-white rounded-2xl border border-slate-200">
+        <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+          <div class="font-bold text-slate-900 text-sm flex items-center gap-2">📝 Auto-drafted wrap-up <span class="text-[10px] px-2 py-0.5 rounded badge-h1 font-medium">H1</span></div>
+          <div class="text-xs text-slate-500">drafted by agent · awaiting Maya's approval</div>
+        </div>
+        <div class="p-4 text-sm text-slate-700 leading-relaxed bg-slate-50 mx-3 mt-3 mb-3 rounded-lg">
+          <p><b>Issue:</b> Client reported black CCTV feeds at Site 4 (Cincinnati).</p>
+          <p class="mt-2"><b>Root cause:</b> AP-OUTBR-04 dropped 23 min before call. Likely firmware-batch issue affecting 3 other clients (escalated to ITOps).</p>
+          <p class="mt-2"><b>Resolution:</b> Triage Agent auto-restarted AP at 14:32; feed restored. Confirmed verbally with client at 14:36.</p>
+          <p class="mt-2"><b>Follow-up:</b> Firmware patch recommendation forwarded to Rohan (ITOps). Client opted in to proactive notifications.</p>
+        </div>
+        <div class="px-4 pb-4 flex gap-2">
+          <button class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-md font-semibold hover:bg-blue-700">Approve & close</button>
+          <button class="text-xs bg-white border border-slate-200 text-slate-700 px-3 py-1.5 rounded-md font-semibold hover:bg-slate-50">Edit</button>
+        </div>
+      </div>
+
+      <!-- Trust dial mini -->
+      <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 text-white">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-2">Customer Trust Dial <span class="text-[10px] px-2 py-0.5 rounded badge-h2 font-medium">H2</span></div>
+          <div class="text-xs text-slate-400">Tenant: Retail Co</div>
+        </div>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between"><span>Low-blast actions (restarts, queries)</span><span class="font-semibold text-emerald-400">Auto-approve</span></div>
+          <div class="flex justify-between"><span>Medium-blast (firmware push, config)</span><span class="font-semibold text-amber-400">ITOps approval</span></div>
+          <div class="flex justify-between"><span>High-blast (mass change, financial)</span><span class="font-semibold text-rose-400">Client approval</span></div>
+        </div>
+        <div class="mt-3 text-[10px] text-slate-400">Customer-owned settings · reviewed quarterly · audit-logged</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========================================= -->
+<!--          ROHAN — ITOPS WORKSPACE          -->
+<!-- ========================================= -->
+<div id="view-rohan" class="view">
+  <div class="flex" style="min-height: calc(100vh - 64px);">
+
+    <!-- Slack-style sidebar -->
+    <div class="slack-sidebar w-60 flex-shrink-0 py-4 text-sm">
+      <div class="px-4 pb-3 border-b border-white/10 mb-2">
+        <div class="font-bold text-base flex items-center gap-2">TechGuard <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="text-xs text-white/60 mt-0.5">rohan.k@techguard · ITOps L3</div>
+      </div>
+
+      <div class="px-3 mb-3">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-white/50 px-1 py-1.5">Agentforce</div>
+        <div class="slack-channel px-2 py-1.5 rounded flex items-center gap-2 text-white/85">
+          <span class="text-white/40">#</span><span>agentforce-approvals</span>
+          <span class="ml-auto bg-rose-500 text-white text-[10px] px-1.5 rounded-full font-bold">3</span>
+        </div>
+        <div class="slack-channel active px-2 py-1.5 rounded flex items-center gap-2">
+          <span class="text-white/70">#</span><span>predictive-alerts</span>
+          <span class="ml-auto bg-rose-500 text-white text-[10px] px-1.5 rounded-full font-bold">1</span>
+        </div>
+        <div class="slack-channel px-2 py-1.5 rounded flex items-center gap-2 text-white/85">
+          <span class="text-white/40">#</span><span>incident-postmortems</span>
+        </div>
+        <div class="slack-channel px-2 py-1.5 rounded flex items-center gap-2 text-white/85">
+          <span class="text-white/40">#</span><span>cross-domain-rca</span>
+        </div>
+      </div>
+
+      <div class="px-3 mb-3">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-white/50 px-1 py-1.5">Channels</div>
+        <div class="slack-channel px-2 py-1.5 rounded flex items-center gap-2 text-white/85"><span class="text-white/40">#</span>itops-l3</div>
+        <div class="slack-channel px-2 py-1.5 rounded flex items-center gap-2 text-white/85"><span class="text-white/40">#</span>cctv-platform</div>
+        <div class="slack-channel px-2 py-1.5 rounded flex items-center gap-2 text-white/85"><span class="text-white/40">#</span>connectivity-platform</div>
+        <div class="slack-channel px-2 py-1.5 rounded flex items-center gap-2 text-white/85"><span class="text-white/40">#</span>cloud-platform</div>
+      </div>
+
+      <div class="px-3">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-white/50 px-1 py-1.5">My agents</div>
+        <div class="slack-channel px-2 py-1.5 rounded flex items-center gap-2 text-white/85">
+          <span class="w-1.5 h-1.5 rounded-full bg-orange-400 pulse-ring"></span>
+          <span>Predictive Maint.</span>
+          <span class="ml-auto text-[10px] px-1.5 py-0.5 rounded badge-h2 font-bold">H2</span>
+        </div>
+        <div class="slack-channel px-2 py-1.5 rounded flex items-center gap-2 text-white/85">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span>Cross-Domain RCA</span>
+          <span class="ml-auto text-[10px] px-1.5 py-0.5 rounded badge-h2 font-bold">H2</span>
+        </div>
+        <div class="slack-channel px-2 py-1.5 rounded flex items-center gap-2 text-white/85">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span>Triage</span>
+          <span class="ml-auto text-[10px] px-1.5 py-0.5 rounded badge-h1 font-bold">H1</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN AREA -->
+    <div class="flex-1 bg-white">
+
+      <!-- Channel header -->
+      <div class="px-6 py-3 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <div class="font-bold text-slate-900 flex items-center gap-2"><span class="text-slate-400">#</span>predictive-alerts</div>
+          <div class="text-xs text-slate-500">Agentforce posts here when predictive models flag failures · 47 members · auto-archive 90d</div>
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+          <span class="px-2 py-1 rounded bg-emerald-100 text-emerald-700 font-semibold">Endpoint Graph ✓</span>
+          <span class="px-2 py-1 rounded bg-orange-100 text-orange-700 font-semibold">Predictive Agent · active</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-0" style="height: calc(100vh - 64px - 65px);">
+
+        <!-- Slack-style conversation -->
+        <div class="col-span-7 border-r border-slate-200 overflow-y-auto scrollbar-thin p-6 space-y-5">
+
+          <!-- Predictive failure alert -->
+          <div class="flex gap-3">
+            <div class="w-9 h-9 rounded gradient-agent flex items-center justify-center text-white font-bold text-sm flex-shrink-0">🤖</div>
+            <div class="flex-1">
+              <div class="flex items-baseline gap-2">
+                <div class="font-bold text-slate-900">Predictive Maintenance Agent</div>
+                <div class="text-xs px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-semibold">APP</div>
+                <div class="text-xs text-slate-500">14:08</div>
+              </div>
+              <div class="mt-2 border-2 border-orange-200 rounded-xl overflow-hidden">
+                <div class="bg-orange-50 px-4 py-2 flex items-center justify-between border-b border-orange-200">
+                  <div class="font-bold text-orange-900 flex items-center gap-2">⚠️ Predictive failure detected · T-72hr</div>
+                  <div class="text-xs text-orange-700 font-mono">Confidence: 91%</div>
+                </div>
+                <div class="p-4 space-y-3 bg-white">
+                  <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <div class="text-xs text-slate-500">Tenant</div>
+                      <div class="font-semibold">RetailNorth Corp · Platinum</div>
+                    </div>
+                    <div>
+                      <div class="text-xs text-slate-500">Site / Asset</div>
+                      <div class="font-semibold">Site 4 · NVR-03 (cluster of 3)</div>
+                    </div>
+                    <div>
+                      <div class="text-xs text-slate-500">Signal pattern</div>
+                      <div class="font-semibold">SMART disk degrade + thermal variance</div>
+                    </div>
+                    <div>
+                      <div class="text-xs text-slate-500">Predicted failure</div>
+                      <div class="font-semibold text-rose-700">≤ 72 hours</div>
+                    </div>
+                  </div>
+
+                  <div class="border-t border-slate-100 pt-3">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">Proposed plan (4 steps)</div>
+                    <div class="space-y-1.5 text-sm">
+                      <div class="flex items-start gap-2"><span class="w-5 h-5 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold flex-shrink-0">1</span><span><b>Trigger backup snapshot to cloud</b> · auto-approved (low blast)</span><span class="ml-auto text-xs text-emerald-700">✓ already running</span></div>
+                      <div class="flex items-start gap-2"><span class="w-5 h-5 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold flex-shrink-0">2</span><span><b>Pre-stage replacement NVR</b> from Cincinnati depot to Maria's truck</span><span class="ml-auto text-xs text-emerald-700">✓ auto-approved</span></div>
+                      <div class="flex items-start gap-2"><span class="w-5 h-5 rounded bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold flex-shrink-0">3</span><span><b>Open preventive work order</b> · dispatch Maria T-48hr window</span><span class="ml-auto text-xs text-amber-700">⏳ awaiting your approval</span></div>
+                      <div class="flex items-start gap-2"><span class="w-5 h-5 rounded bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold flex-shrink-0">4</span><span><b>Draft client comms</b> for Marcus Chen · review tone</span><span class="ml-auto text-xs text-amber-700">⏳ awaiting your approval</span></div>
+                    </div>
+                  </div>
+
+                  <!-- Why this plan (RAG grounding) -->
+                  <details class="border-t border-slate-100 pt-3">
+                    <summary class="text-xs font-bold uppercase tracking-wider text-slate-700 cursor-pointer">Why this plan · grounding (3 sources)</summary>
+                    <div class="mt-2 space-y-1.5 text-xs text-slate-700">
+                      <div class="flex gap-2"><span class="text-slate-500">[1]</span><span>Vendor advisory NVR-23-411 · disk firmware vNG-2.4 has 14% failure rate when thermal &gt; 71°C sustained</span></div>
+                      <div class="flex gap-2"><span class="text-slate-500">[2]</span><span>Historical match · 7 similar SMART+thermal signatures across tenant base in past 18mo · 6 progressed to hard failure within 96hr</span></div>
+                      <div class="flex gap-2"><span class="text-slate-500">[3]</span><span>Tenant SLA: P1 CCTV outage = $42K/incident penalty exposure · preventive cost ~$280</span></div>
+                    </div>
+                  </details>
+
+                  <!-- Action buttons -->
+                  <div class="border-t border-slate-100 pt-3 flex gap-2">
+                    <button onclick="approveRohanPlan(this)" class="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-700">Approve plan</button>
+                    <button class="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-50">Edit comms tone</button>
+                    <button class="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-50">Reject + reroute</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Auto-approval confirmation -->
+          <div class="flex gap-3" id="rohan-approval-confirmation" style="display: none;">
+            <div class="w-9 h-9 rounded gradient-agent flex items-center justify-center text-white font-bold text-sm flex-shrink-0">🤖</div>
+            <div class="flex-1">
+              <div class="flex items-baseline gap-2">
+                <div class="font-bold text-slate-900">Predictive Maintenance Agent</div>
+                <div class="text-xs text-slate-500">just now</div>
+              </div>
+              <div class="mt-1 text-sm text-slate-700 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                ✅ Plan approved by @rohan. Work order #WO-89472 dispatched to Maria. Client comms scheduled to Marcus Chen at 14:30. Preventive maintenance window: tomorrow 09:00-11:00.
+              </div>
+            </div>
+          </div>
+
+          <!-- Cross-domain correlation example -->
+          <div class="flex gap-3">
+            <div class="w-9 h-9 rounded bg-purple-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">🤖</div>
+            <div class="flex-1">
+              <div class="flex items-baseline gap-2">
+                <div class="font-bold text-slate-900">Cross-Domain RCA Agent</div>
+                <div class="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-semibold">APP</div>
+                <div class="text-xs text-slate-500">13:42</div>
+                <div class="text-[10px] px-2 py-0.5 rounded badge-h2 font-medium ml-auto">H2</div>
+              </div>
+              <div class="mt-2 border border-purple-200 rounded-xl p-4 bg-purple-50/40">
+                <div class="font-bold text-slate-900 mb-2">🔗 Cross-domain incident detected · 3 service lines, 1 root cause</div>
+                <div class="text-sm text-slate-700 mb-3">Tenant <b>WestCoast Manufacturing</b>: simultaneous AP signal drop (Connectivity), CCTV upload failure (CCTV), and cloud-monitor alerts (Cloud) — all at Site 12, Building C.</div>
+                <div class="bg-white rounded-lg p-3 text-xs">
+                  <div class="font-bold text-slate-700 mb-1">Inferred root cause:</div>
+                  <div class="text-slate-700">Site 12 Building C lost power at 13:38 (UPS battery exhausted). All downstream symptoms cascade from this single event. <b>Recommend:</b> coordinate one truck roll, not three.</div>
+                </div>
+                <div class="mt-3 flex items-center justify-between text-xs">
+                  <span class="text-purple-700 font-semibold">Saves: 2 truck rolls, ~$900 + 3hr CSA time</span>
+                  <button class="text-purple-700 font-semibold underline">View dependency graph →</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Insight loop after resolution -->
+          <div class="flex gap-3">
+            <div class="w-9 h-9 rounded bg-emerald-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">🤖</div>
+            <div class="flex-1">
+              <div class="flex items-baseline gap-2">
+                <div class="font-bold text-slate-900">Insight Loop · Predictive Agent</div>
+                <div class="text-xs text-slate-500">10:15</div>
+                <div class="text-[10px] px-2 py-0.5 rounded badge-h3 font-medium ml-auto">H3 · Federated Learning</div>
+              </div>
+              <div class="mt-2 border border-emerald-200 rounded-xl p-4 bg-emerald-50/40">
+                <div class="font-semibold text-slate-900 mb-2">💡 Pattern learned · suggested rule rollout</div>
+                <div class="text-sm text-slate-700">The SMART + thermal signature you approved yesterday matched <b>2 other NVR clusters</b> across our tenant base (with opt-in consent). Suggest extending the monitoring rule tenant-wide.</div>
+                <div class="mt-3 flex gap-2">
+                  <button class="bg-emerald-600 text-white px-3 py-1.5 rounded text-xs font-semibold">Roll out tenant-wide</button>
+                  <button class="bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded text-xs font-semibold">Pilot to 10 tenants first</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT — telemetry dashboard -->
+        <div class="col-span-5 bg-slate-50 p-5 overflow-y-auto scrollbar-thin space-y-4">
+
+          <div class="bg-white rounded-2xl p-4 border border-slate-200">
+            <div class="font-bold text-slate-900 text-sm flex items-center gap-2 mb-3">
+              📊 Endpoint Graph · live telemetry
+              <span class="text-[10px] px-2 py-0.5 rounded badge-h1 font-medium">H1</span>
+            </div>
+            <div class="grid grid-cols-3 gap-3 text-xs">
+              <div class="bg-blue-50 rounded-lg p-3 text-center">
+                <div class="text-2xl font-bold text-blue-700">2.04M</div>
+                <div class="text-blue-600 mt-0.5">endpoints</div>
+              </div>
+              <div class="bg-emerald-50 rounded-lg p-3 text-center">
+                <div class="text-2xl font-bold text-emerald-700">99.7%</div>
+                <div class="text-emerald-600 mt-0.5">healthy</div>
+              </div>
+              <div class="bg-amber-50 rounded-lg p-3 text-center">
+                <div class="text-2xl font-bold text-amber-700">147</div>
+                <div class="text-amber-600 mt-0.5">at-risk</div>
+              </div>
+            </div>
+            <div class="mt-3 space-y-1.5 text-xs">
+              <div class="flex justify-between"><span class="text-slate-600">CCTV streams</span><span class="font-semibold">832K · 99.8% up</span></div>
+              <div class="flex justify-between"><span class="text-slate-600">Cloud sites</span><span class="font-semibold">14.3K · 99.9% up</span></div>
+              <div class="flex justify-between"><span class="text-slate-600">Wireless APs</span><span class="font-semibold">1.19M · 99.6% up</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-4 border border-slate-200">
+            <div class="font-bold text-slate-900 text-sm flex items-center gap-2 mb-3">
+              🛡️ Trust & Audit · my queue
+              <span class="text-[10px] px-2 py-0.5 rounded badge-h1 font-medium">H1</span>
+            </div>
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center gap-2 p-2 rounded bg-amber-50 border border-amber-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                <span class="flex-1">3 medium-blast actions awaiting your approval</span>
+                <button class="text-amber-700 font-semibold">Review</button>
+              </div>
+              <div class="flex items-center gap-2 p-2 rounded bg-emerald-50 border border-emerald-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span class="flex-1">47 low-blast auto-executed in last 24hr · all verified</span>
+                <button class="text-emerald-700 font-semibold">Audit log</button>
+              </div>
+              <div class="flex items-center gap-2 p-2 rounded">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                <span class="flex-1 text-slate-700">0 high-blast (no client-tier approvals pending)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-4 border border-slate-200">
+            <div class="font-bold text-slate-900 text-sm flex items-center gap-2 mb-3">
+              🎯 Eval suite · my domain
+              <span class="text-[10px] px-2 py-0.5 rounded badge-h1 font-medium">H1</span>
+            </div>
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between"><span class="text-slate-600">Predictive accuracy (top-20 use cases)</span><span class="font-semibold text-emerald-700">94.2%</span></div>
+              <div class="flex justify-between"><span class="text-slate-600">False-positive rate</span><span class="font-semibold">3.1%</span></div>
+              <div class="flex justify-between"><span class="text-slate-600">Hallucination rate</span><span class="font-semibold text-emerald-700">0.4%</span></div>
+              <div class="flex justify-between"><span class="text-slate-600">Last regression caught</span><span class="font-semibold">6d ago · CCTV-04</span></div>
+            </div>
+          </div>
+
+          <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-4 text-white">
+            <div class="text-xs font-bold uppercase tracking-wider text-orange-400 mb-2">Insights this week</div>
+            <div class="space-y-2 text-xs">
+              <div>• 1,247 incidents prevented (proactive) · +18% WoW</div>
+              <div>• Saved ~$340K in SLA penalty exposure</div>
+              <div>• 87 new runbook patterns auto-captured</div>
+              <div>• 3 firmware-batch issues escalated to procurement</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================= -->
+<!--          MARIA — FIELD TECH MOBILE        -->
+<!-- ========================================= -->
+<div id="view-maria" class="view">
+  <div class="max-w-[1600px] mx-auto px-6 py-5">
+
+    <div class="grid grid-cols-12 gap-6">
+
+      <!-- LEFT — context narrative -->
+      <div class="col-span-3 space-y-4">
+        <div class="bg-white rounded-2xl p-5 border border-slate-200">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-xl">👷🏽‍♀️</div>
+            <div>
+              <div class="font-bold text-slate-900 text-sm">Maria Chen</div>
+              <div class="text-xs text-slate-500">Field Tech · Cincinnati Region</div>
+            </div>
+          </div>
+          <div class="text-xs space-y-1.5">
+            <div class="flex justify-between"><span class="text-slate-500">Today's stops</span><span class="font-semibold">5 / 6</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">FVF this week</span><span class="font-semibold text-emerald-700">92%</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Truck inventory</span><span class="font-semibold">Pre-staged ✓</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Route optimization</span><span class="font-semibold">Saved 38 min</span></div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-5 border border-slate-200">
+          <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Surface · context</div>
+          <p class="text-xs text-slate-700 leading-relaxed">
+            Salesforce Field Service Mobile + Agentforce. Pre-arrival diagnostic, AR-overlay procedure, voice-dictated reports. Built so Maria spends time on physical fix (irreplaceable) not on remote diagnosis (replicable).
+          </p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-5 border border-slate-200">
+          <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Capabilities visible</div>
+          <div class="space-y-1.5 text-xs">
+            <div class="flex items-center gap-2"><span class="text-[10px] px-2 py-0.5 rounded badge-h1 font-medium">H1</span>Mobile Companion</div>
+            <div class="flex items-center gap-2"><span class="text-[10px] px-2 py-0.5 rounded badge-h1 font-medium">H1</span>AR-overlay procedure</div>
+            <div class="flex items-center gap-2"><span class="text-[10px] px-2 py-0.5 rounded badge-h1 font-medium">H1</span>Voice documentation</div>
+            <div class="flex items-center gap-2"><span class="text-[10px] px-2 py-0.5 rounded badge-h2 font-medium">H2</span>Auto-dispatch + route opt</div>
+            <div class="flex items-center gap-2"><span class="text-[10px] px-2 py-0.5 rounded badge-h2 font-medium">H2</span>Parts pre-staging</div>
+            <div class="flex items-center gap-2"><span class="text-[10px] px-2 py-0.5 rounded badge-h3 font-medium">H3</span>Self-healing closed loop</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER — phone frame: day plan -->
+      <div class="col-span-5 flex justify-center">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen flex flex-col">
+            <!-- Status bar -->
+            <div class="pt-10 px-6 pb-2 flex items-center justify-between text-xs font-semibold text-slate-700">
+              <span>9:14</span>
+              <span class="flex items-center gap-1">📶 🔋</span>
+            </div>
+
+            <!-- App header -->
+            <div class="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-700 text-white">
+              <div class="text-[10px] font-bold uppercase tracking-wider opacity-80">TechGuard Field</div>
+              <div class="font-bold text-lg leading-tight mt-0.5">Good morning, Maria</div>
+              <div class="text-xs opacity-90 mt-0.5">5 stops planned · route optimized · all parts pre-staged ✓</div>
+            </div>
+
+            <!-- Day plan -->
+            <div class="flex-1 overflow-y-auto scrollbar-thin px-4 py-3 space-y-3 bg-slate-50">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-2">TODAY · TUE JUN 6</div>
+
+              <!-- Stop 1 — predictive (THE demo flow) -->
+              <div class="bg-white rounded-2xl p-4 border-2 border-orange-300 shadow-sm pulse-ring">
+                <div class="flex items-start justify-between mb-2">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs font-bold text-orange-700 uppercase tracking-wider">Preventive · T-48hr</span>
+                      <span class="text-[10px] px-1.5 py-0.5 rounded badge-h2 font-medium">H2</span>
+                    </div>
+                    <div class="font-bold text-slate-900 mt-1">RetailNorth · Site 4</div>
+                    <div class="text-xs text-slate-600">NVR-03 swap · 215 Walnut St</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="font-bold text-slate-900 text-sm">09:30</div>
+                    <div class="text-xs text-slate-500">12 min away</div>
+                  </div>
+                </div>
+                <div class="bg-orange-50 rounded-lg p-2 text-xs space-y-1 mb-2">
+                  <div class="font-semibold text-orange-900 flex items-center gap-1.5">🤖 Pre-arrival from agent:</div>
+                  <div class="text-orange-900">NVR cluster predicted to fail in 48hr. Replacement <b>NVR-Sentry-Pro v2</b> is in your truck bay 3. Backup snapshot complete. Client briefed by Rohan.</div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                  <div class="bg-slate-100 rounded p-2 text-center"><div class="font-semibold">Part</div><div class="text-slate-600">Bay 3 ✓</div></div>
+                  <div class="bg-slate-100 rounded p-2 text-center"><div class="font-semibold">Access</div><div class="text-slate-600">Marcus C.</div></div>
+                  <div class="bg-slate-100 rounded p-2 text-center"><div class="font-semibold">Est. time</div><div class="text-slate-600">45 min</div></div>
+                </div>
+                <button onclick="mariaOpenJob()" class="mt-3 w-full bg-orange-600 text-white py-2 rounded-lg text-sm font-semibold">Open job →</button>
+              </div>
+
+              <!-- Stop 2 -->
+              <div class="bg-white rounded-2xl p-4 border border-slate-200">
+                <div class="flex items-start justify-between mb-2">
+                  <div>
+                    <div class="text-xs font-semibold text-blue-700">Repair · AP install</div>
+                    <div class="font-bold text-slate-900 mt-0.5 text-sm">FreshFoods Distribution</div>
+                    <div class="text-xs text-slate-600">3 AP units · 4022 Elm Ave</div>
+                  </div>
+                  <div class="text-right text-xs">
+                    <div class="font-bold text-slate-900">11:15</div>
+                    <div class="text-slate-500">18 min drive</div>
+                  </div>
+                </div>
+                <div class="text-xs text-slate-600">Parts pre-staged · floor plan attached · safety brief: forklift active zone</div>
+              </div>
+
+              <!-- Stop 3 -->
+              <div class="bg-white rounded-2xl p-4 border border-slate-200">
+                <div class="flex items-start justify-between mb-2">
+                  <div>
+                    <div class="text-xs font-semibold text-emerald-700">Routine · CCTV firmware</div>
+                    <div class="font-bold text-slate-900 mt-0.5 text-sm">Northside Medical Clinic</div>
+                    <div class="text-xs text-slate-600">8 cameras · 991 Maple Rd</div>
+                  </div>
+                  <div class="text-right text-xs">
+                    <div class="font-bold text-slate-900">13:00</div>
+                    <div class="text-slate-500">9 min</div>
+                  </div>
+                </div>
+                <div class="text-xs text-slate-600">HIPAA site · on-site escort required · 30 min</div>
+              </div>
+
+              <!-- More stops collapsed -->
+              <div class="text-center text-xs text-slate-500 py-2">+ 2 more stops · ends 16:45</div>
+            </div>
+
+            <!-- Bottom nav -->
+            <div class="border-t border-slate-200 bg-white px-2 py-2 flex justify-around text-xs">
+              <div class="flex flex-col items-center text-emerald-700 font-semibold"><span>📋</span><span>Day plan</span></div>
+              <div class="flex flex-col items-center text-slate-500"><span>🗺️</span><span>Route</span></div>
+              <div class="flex flex-col items-center text-slate-500"><span>📦</span><span>Truck</span></div>
+              <div class="flex flex-col items-center text-slate-500"><span>💬</span><span>Chat</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT — phone frame: in-job AR-overlay screen -->
+      <div class="col-span-4 flex justify-center">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen flex flex-col">
+            <div class="pt-10 px-6 pb-2 flex items-center justify-between text-xs font-semibold text-slate-700">
+              <span>9:43</span>
+              <span class="flex items-center gap-1">📶 🔋</span>
+            </div>
+
+            <!-- Job header -->
+            <div class="px-5 py-3 bg-slate-900 text-white">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-[10px] font-bold uppercase tracking-wider text-orange-400">Job · NVR swap</div>
+                  <div class="font-bold leading-tight mt-0.5">RetailNorth · Site 4</div>
+                </div>
+                <div class="text-xs bg-orange-500 text-white px-2 py-1 rounded">Step 3 / 7</div>
+              </div>
+            </div>
+
+            <!-- AR-overlay view -->
+            <div class="relative bg-slate-200" style="height: 240px;">
+              <div class="absolute inset-0 bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center text-slate-500 text-sm">
+                <span>📷 Camera view · NVR rack</span>
+              </div>
+              <!-- AR overlay annotations -->
+              <div class="absolute" style="top: 30px; left: 50px;">
+                <div class="bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg">NVR-03 · Disk 2</div>
+                <div class="w-12 h-12 border-2 border-orange-500 rounded mt-1" style="box-shadow: 0 0 0 4px rgba(255,90,54,0.2);"></div>
+              </div>
+              <div class="absolute" style="bottom: 50px; right: 30px;">
+                <div class="bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg">Cable: keep ✓</div>
+              </div>
+              <div class="absolute top-3 right-3 bg-black/60 text-white text-[10px] px-2 py-1 rounded font-mono">AR · live overlay</div>
+            </div>
+
+            <!-- Step instructions -->
+            <div class="flex-1 overflow-y-auto scrollbar-thin px-4 py-3 space-y-3 bg-white">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Current step</div>
+              <div class="bg-orange-50 border-2 border-orange-300 rounded-xl p-3">
+                <div class="font-bold text-slate-900 text-sm">Power down NVR-03 safely</div>
+                <div class="text-xs text-slate-700 mt-1.5">Hold front panel power button 3s · wait for amber LED · verify cluster failover (NVR-01 + NVR-02 should absorb load)</div>
+                <div class="mt-2 text-xs bg-white rounded p-2 text-emerald-700 font-semibold">✓ Backup snapshot completed last night · safe to proceed</div>
+              </div>
+              <div class="text-xs text-slate-600">
+                <b>Why this matters:</b> 5s power-down → 8s LED transition → 12s cluster rebalance. Don't pull power cable; UPS will trigger alerts.
+              </div>
+
+              <div class="border-t border-slate-200 pt-3">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Next steps</div>
+                <div class="space-y-1.5 text-xs text-slate-700">
+                  <div>4. Unmount + remove NVR-03</div>
+                  <div>5. Mount replacement NVR (in truck bay 3)</div>
+                  <div>6. Connect to existing cable harness</div>
+                  <div>7. Power up + verify all 16 cameras stream</div>
+                </div>
+              </div>
+
+              <button class="w-full bg-emerald-600 text-white py-2.5 rounded-lg text-sm font-semibold mt-2">🎤 Hold to dictate notes</button>
+              <div class="text-[10px] text-center text-slate-500">or tap "Complete step" when done</div>
+              <button class="w-full bg-orange-600 text-white py-2.5 rounded-lg text-sm font-semibold">Complete step 3 ✓</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========================================= -->
+<!--           CANONICAL DEMO VIEW             -->
+<!-- ========================================= -->
+<div id="view-demo" class="view">
+  <div class="bg-slate-900 text-white py-8">
+    <div class="max-w-[1600px] mx-auto px-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider text-orange-400 mb-2">▶ Canonical demo · the journey map from §5.2</div>
+          <h2 class="text-3xl font-bold mb-2">Predictive server failure · end-to-end</h2>
+          <p class="text-slate-300 max-w-2xl">Watch the same incident travel across all three personas. Three AI-to-human handoffs. The failure that never happens.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="demoPrev()" class="bg-white/10 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/20">◀ Prev</button>
+          <button onclick="demoNext()" class="bg-orange-500 text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-orange-600">Next step ▶</button>
+          <button onclick="demoReset()" class="bg-white/10 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/20">⟲ Restart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-[1600px] mx-auto px-6 py-8 grid grid-cols-12 gap-6">
+
+    <!-- LEFT: Timeline -->
+    <div class="col-span-4">
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 sticky top-20">
+        <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Timeline · 9 steps</div>
+        <div class="relative">
+          <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-slate-200" style="margin-left: 0px;"></div>
+
+          <div id="demo-step-0" class="demo-step active relative pl-8 pb-5">
+            <div class="timeline-dot" style="top: 2px;"></div>
+            <div class="text-xs text-slate-500 font-mono">T-72hr · Detection</div>
+            <div class="font-semibold text-slate-900 text-sm mt-0.5">Telemetry signal · agent</div>
+          </div>
+          <div id="demo-step-1" class="demo-step pending relative pl-8 pb-5">
+            <div class="timeline-dot" style="top: 2px;"></div>
+            <div class="text-xs text-slate-500 font-mono">T-71hr · Diagnosis</div>
+            <div class="font-semibold text-slate-700 text-sm mt-0.5">RAG + Endpoint Graph reasoning</div>
+          </div>
+          <div id="demo-step-2" class="demo-step pending relative pl-8 pb-5">
+            <div class="timeline-dot" style="top: 2px;"></div>
+            <div class="text-xs text-slate-500 font-mono">T-71hr · Plan generated</div>
+            <div class="font-semibold text-slate-700 text-sm mt-0.5">Blast-radius classifier</div>
+          </div>
+          <div id="demo-step-3" class="demo-step pending relative pl-8 pb-5">
+            <div class="timeline-dot" style="top: 2px;"></div>
+            <div class="text-xs text-slate-500 font-mono">T-71hr · 🤝 Handoff #1</div>
+            <div class="font-semibold text-orange-600 text-sm mt-0.5">Agent → Rohan (ITOps)</div>
+          </div>
+          <div id="demo-step-4" class="demo-step pending relative pl-8 pb-5">
+            <div class="timeline-dot" style="top: 2px;"></div>
+            <div class="text-xs text-slate-500 font-mono">T-71hr · Execution</div>
+            <div class="font-semibold text-slate-700 text-sm mt-0.5">Dispatch + client notification</div>
+          </div>
+          <div id="demo-step-5" class="demo-step pending relative pl-8 pb-5">
+            <div class="timeline-dot" style="top: 2px;"></div>
+            <div class="text-xs text-slate-500 font-mono">T-48hr · 🤝 Handoff #2</div>
+            <div class="font-semibold text-orange-600 text-sm mt-0.5">Agent → Maria (Field)</div>
+          </div>
+          <div id="demo-step-6" class="demo-step pending relative pl-8 pb-5">
+            <div class="timeline-dot" style="top: 2px;"></div>
+            <div class="text-xs text-slate-500 font-mono">T-47hr · Verification</div>
+            <div class="font-semibold text-slate-700 text-sm mt-0.5">Post-swap telemetry</div>
+          </div>
+          <div id="demo-step-7" class="demo-step pending relative pl-8 pb-5">
+            <div class="timeline-dot" style="top: 2px;"></div>
+            <div class="text-xs text-slate-500 font-mono">T-0 · The failure that wasn't</div>
+            <div class="font-semibold text-slate-700 text-sm mt-0.5">Customer never knew</div>
+          </div>
+          <div id="demo-step-8" class="demo-step pending relative pl-8">
+            <div class="timeline-dot" style="top: 2px;"></div>
+            <div class="text-xs text-slate-500 font-mono">T+24hr · 🤝 Handoff #3</div>
+            <div class="font-semibold text-orange-600 text-sm mt-0.5">Insight loop · rule learned</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Stage content -->
+    <div class="col-span-8">
+      <div id="demo-stage" class="bg-white rounded-2xl border border-slate-200 overflow-hidden min-h-[600px]">
+        <!-- Stages injected by JS -->
+      </div>
+
+      <!-- Handoff legend -->
+      <div class="mt-4 bg-white rounded-xl p-4 border border-slate-200 text-xs flex items-center gap-6">
+        <div class="font-semibold text-slate-700">Legend:</div>
+        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background: var(--agentforce);"></span><span class="text-slate-700">Agent action</span></div>
+        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-600"></span><span class="text-slate-700">Human (Maya · CSA)</span></div>
+        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-purple-600"></span><span class="text-slate-700">Human (Rohan · ITOps)</span></div>
+        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-600"></span><span class="text-slate-700">Human (Maria · Field)</span></div>
+        <div class="flex items-center gap-2"><span class="text-orange-600 font-bold">🤝</span><span class="text-slate-700">AI-to-human handoff</span></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========================================= -->
+<!--          METRICS & ARCHITECTURE           -->
+<!-- ========================================= -->
+<div id="view-metrics" class="view">
+  <div class="max-w-[1600px] mx-auto px-6 py-8 space-y-8">
+
+    <div>
+      <h2 class="text-3xl font-bold text-slate-900">Metrics & Architecture</h2>
+      <p class="text-slate-600 mt-1">North Star, guardrails, three-layer architecture, and the unit economics that make this a portfolio bet.</p>
+    </div>
+
+    <!-- NSM + GOAL TREE -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider text-orange-600">North Star Metric</div>
+          <div class="text-2xl font-bold text-slate-900 mt-1">AROE · Autonomous Resolved Outcomes per 1K endpoints/month</div>
+          <p class="text-sm text-slate-600 mt-1 max-w-3xl">Service outcomes (resolutions, preventive interventions, fulfillments) fully executed without human touch AND verified by post-resolution telemetry or client confirmation.</p>
+        </div>
+        <div class="text-right">
+          <div class="text-5xl font-bold text-slate-900">87.4</div>
+          <div class="text-xs text-emerald-600 font-bold mt-1">↑ 14% MoM · Y1 target: 100</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-6 gap-3 mt-6">
+        <div class="border border-slate-200 rounded-lg p-3">
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">G1 · Proactive</div>
+          <div class="text-2xl font-bold text-slate-900 mt-0.5">27%</div>
+          <div class="text-[10px] text-emerald-600 font-semibold">Y3: 60%</div>
+        </div>
+        <div class="border border-slate-200 rounded-lg p-3">
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">G2 · Auto resolution</div>
+          <div class="text-2xl font-bold text-slate-900 mt-0.5">62%</div>
+          <div class="text-[10px] text-emerald-600 font-semibold">Y3: 80%</div>
+        </div>
+        <div class="border border-slate-200 rounded-lg p-3">
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">G3 · First-visit fix</div>
+          <div class="text-2xl font-bold text-slate-900 mt-0.5">84%</div>
+          <div class="text-[10px] text-emerald-600 font-semibold">Y3: 92%</div>
+        </div>
+        <div class="border border-slate-200 rounded-lg p-3">
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">G4 · MTTR</div>
+          <div class="text-2xl font-bold text-slate-900 mt-0.5">–43%</div>
+          <div class="text-[10px] text-emerald-600 font-semibold">Y3: –65%</div>
+        </div>
+        <div class="border border-slate-200 rounded-lg p-3">
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">G5 · Cost / endpoint</div>
+          <div class="text-2xl font-bold text-slate-900 mt-0.5">–21%</div>
+          <div class="text-[10px] text-emerald-600 font-semibold">Y3: –45%</div>
+        </div>
+        <div class="border border-slate-200 rounded-lg p-3">
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">G6 · Trust Index</div>
+          <div class="text-2xl font-bold text-slate-900 mt-0.5">+9 NPS</div>
+          <div class="text-[10px] text-emerald-600 font-semibold">Guardrail · never –2</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARCHITECTURE -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200">
+      <div class="text-2xl font-bold text-slate-900 mb-2">Three-layer architecture</div>
+      <p class="text-sm text-slate-600 mb-6">Surfaces · Agentforce runtime · Data Cloud Endpoint Graph. Every layer governable, observable, metered to outcome.</p>
+
+      <!-- Layer 1: Surfaces -->
+      <div class="border-2 border-blue-200 bg-blue-50/40 rounded-xl p-4 mb-3">
+        <div class="flex items-center justify-between mb-3">
+          <div class="font-bold text-blue-900 flex items-center gap-2">🖥️ SURFACES <span class="text-xs font-normal text-blue-700">where humans + agents meet</span></div>
+          <div class="text-xs text-blue-700">Slack · Service Cloud Console · Field Mobile · Agentforce Voice · Email · embedded</div>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-white rounded-lg p-3 border border-slate-200">
+            <div class="text-xs font-bold text-slate-900">Maya · CSA</div>
+            <div class="text-xs text-slate-600 mt-1">Service Cloud Console + Slack + Agentforce Voice</div>
+          </div>
+          <div class="bg-white rounded-lg p-3 border border-slate-200">
+            <div class="text-xs font-bold text-slate-900">Rohan · ITOps</div>
+            <div class="text-xs text-slate-600 mt-1">Slack (primary) + Telemetry dashboards + audit console</div>
+          </div>
+          <div class="bg-white rounded-lg p-3 border border-slate-200">
+            <div class="text-xs font-bold text-slate-900">Maria · Field</div>
+            <div class="text-xs text-slate-600 mt-1">Field Service Mobile + AR overlay + voice doc</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layer 2: Agentforce -->
+      <div class="border-2 border-orange-200 bg-orange-50/40 rounded-xl p-4 mb-3">
+        <div class="flex items-center justify-between mb-3">
+          <div class="font-bold text-orange-900 flex items-center gap-2">🤖 AGENTFORCE RUNTIME <span class="text-xs font-normal text-orange-700">reasoning + action</span></div>
+        </div>
+        <div class="grid grid-cols-4 gap-3">
+          <div class="bg-white rounded-lg p-3 border border-slate-200">
+            <div class="text-xs font-bold text-slate-900">Planner (LLM)</div>
+            <div class="text-xs text-slate-600 mt-1">Decomposes intent · confidence-scored steps</div>
+          </div>
+          <div class="bg-white rounded-lg p-3 border border-slate-200">
+            <div class="text-xs font-bold text-slate-900">RAG / KB</div>
+            <div class="text-xs text-slate-600 mt-1">Hybrid dense+BM25 · cross-encoder rerank · semantic chunking</div>
+          </div>
+          <div class="bg-white rounded-lg p-3 border border-slate-200">
+            <div class="text-xs font-bold text-slate-900">Action Layer</div>
+            <div class="text-xs text-slate-600 mt-1">Deterministic MuleSoft flows · LLM picks which, not how</div>
+          </div>
+          <div class="bg-white rounded-lg p-3 border border-slate-200">
+            <div class="text-xs font-bold text-slate-900">Policy & Guardrails</div>
+            <div class="text-xs text-slate-600 mt-1">Blast-radius classifier · Trust Dial · PII redaction · rate limits</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layer 3: Data Cloud -->
+      <div class="border-2 border-emerald-200 bg-emerald-50/40 rounded-xl p-4 mb-3">
+        <div class="flex items-center justify-between mb-3">
+          <div class="font-bold text-emerald-900 flex items-center gap-2">🌐 DATA CLOUD · ENDPOINT GRAPH <span class="text-xs font-normal text-emerald-700">unified, identity-resolved, tenant-isolated</span></div>
+        </div>
+        <div class="grid grid-cols-6 gap-2 text-xs">
+          <div class="bg-white rounded p-2 border border-slate-200 text-center"><div class="font-bold">Tenants</div><div class="text-slate-600">15K</div></div>
+          <div class="bg-white rounded p-2 border border-slate-200 text-center"><div class="font-bold">Sites</div><div class="text-slate-600">86K</div></div>
+          <div class="bg-white rounded p-2 border border-slate-200 text-center"><div class="font-bold">Endpoints</div><div class="text-slate-600">2.04M</div></div>
+          <div class="bg-white rounded p-2 border border-slate-200 text-center"><div class="font-bold">Telemetry</div><div class="text-slate-600">streaming</div></div>
+          <div class="bg-white rounded p-2 border border-slate-200 text-center"><div class="font-bold">Contracts/SLA</div><div class="text-slate-600">linked</div></div>
+          <div class="bg-white rounded p-2 border border-slate-200 text-center"><div class="font-bold">Knowledge</div><div class="text-slate-600">versioned</div></div>
+        </div>
+      </div>
+
+      <!-- Layer 4: Ingest -->
+      <div class="border border-slate-200 bg-slate-50 rounded-xl p-4">
+        <div class="flex items-center justify-between mb-2">
+          <div class="font-bold text-slate-900">⚡ INGEST & ORCHESTRATION FABRIC</div>
+          <div class="text-xs text-slate-600">MuleSoft Anypoint · Streaming API · Kafka</div>
+        </div>
+        <div class="text-xs text-slate-600">Source systems: CCTV vendor APIs (Axis, Hikvision) · cloud monitoring (Datadog, vendor-native) · SD-WAN/AP controllers (Meraki, Aruba) · ServiceNow (coexistence) · Field Service Lightning</div>
+      </div>
+    </div>
+
+    <!-- UNIT ECONOMICS -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="bg-white rounded-2xl p-6 border border-slate-200">
+        <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Unit economics · Y3 steady state</div>
+        <table class="w-full text-sm">
+          <tr class="border-b border-slate-100"><td class="py-2 text-slate-600">Inbound contacts + proactive interventions</td><td class="py-2 text-right font-semibold">~3.0M/yr</td></tr>
+          <tr class="border-b border-slate-100"><td class="py-2 text-slate-600">Autonomous resolution (80% Y3 target)</td><td class="py-2 text-right font-semibold">~2.4M/yr</td></tr>
+          <tr class="border-b border-slate-100"><td class="py-2 text-slate-600">AROE</td><td class="py-2 text-right font-semibold">~100</td></tr>
+          <tr class="border-b border-slate-100"><td class="py-2 text-slate-600">Flex Credit COGS per outcome (200 credits avg)</td><td class="py-2 text-right font-semibold">$1.00</td></tr>
+          <tr class="border-b border-slate-100"><td class="py-2 text-slate-600">Annual Flex Credit spend</td><td class="py-2 text-right font-semibold">~$2.4M</td></tr>
+          <tr class="border-b border-slate-100"><td class="py-2 text-slate-600">Direct contact-cost displaced ($18/contact)</td><td class="py-2 text-right font-semibold text-emerald-700">$43M</td></tr>
+          <tr class="border-b border-slate-100"><td class="py-2 text-slate-600">+ Truck-roll waste reduction</td><td class="py-2 text-right font-semibold text-emerald-700">+$15M</td></tr>
+          <tr class="border-b border-slate-100"><td class="py-2 text-slate-600">+ Avoided SLA penalties (predictive)</td><td class="py-2 text-right font-semibold text-emerald-700">+$10–15M</td></tr>
+          <tr class="border-t-2 border-slate-900"><td class="py-3 font-bold">Net annual P&L impact (Y3)</td><td class="py-3 text-right font-bold text-emerald-700 text-lg">~$65–70M</td></tr>
+          <tr><td class="py-2 text-slate-600">Y1 loaded investment</td><td class="py-2 text-right font-semibold">~$24–27M</td></tr>
+          <tr><td class="py-2 text-slate-600">Payback period</td><td class="py-2 text-right font-bold text-emerald-700">~16 months</td></tr>
+        </table>
+      </div>
+
+      <div class="bg-white rounded-2xl p-6 border border-slate-200">
+        <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Guardrails (do not improve NSM at the cost of these)</div>
+        <div class="space-y-2 text-sm">
+          <div class="flex items-center justify-between p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+            <div>
+              <div class="font-semibold text-slate-900">CSAT</div>
+              <div class="text-xs text-slate-600">Never below baseline by &gt;2 pts</div>
+            </div>
+            <div class="font-bold text-emerald-700">4.7 / 5</div>
+          </div>
+          <div class="flex items-center justify-between p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+            <div>
+              <div class="font-semibold text-slate-900">Hallucination rate</div>
+              <div class="text-xs text-slate-600">&lt; 1% on top-20 use cases</div>
+            </div>
+            <div class="font-bold text-emerald-700">0.4%</div>
+          </div>
+          <div class="flex items-center justify-between p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+            <div>
+              <div class="font-semibold text-slate-900">Escalation accuracy</div>
+              <div class="text-xs text-slate-600">&gt; 90% (escalations actually need humans)</div>
+            </div>
+            <div class="font-bold text-emerald-700">94%</div>
+          </div>
+          <div class="flex items-center justify-between p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+            <div>
+              <div class="font-semibold text-slate-900">PII / data leak incidents</div>
+              <div class="text-xs text-slate-600">Zero · hard kill switch</div>
+            </div>
+            <div class="font-bold text-emerald-700">0</div>
+          </div>
+          <div class="flex items-center justify-between p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+            <div>
+              <div class="font-semibold text-slate-900">Cross-tenant data leaks</div>
+              <div class="text-xs text-slate-600">Zero · row-level security enforced</div>
+            </div>
+            <div class="font-bold text-emerald-700">0</div>
+          </div>
+        </div>
+
+        <div class="mt-4 border-t border-slate-100 pt-4">
+          <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Counter-metrics (catch gaming)</div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="bg-slate-50 p-2 rounded"><b class="text-slate-900">Re-open rate</b><div class="text-slate-600">2.1% · ↓ trending</div></div>
+            <div class="bg-slate-50 p-2 rounded"><b class="text-slate-900">Esc-after-deflect</b><div class="text-slate-600">3.4% · stable</div></div>
+            <div class="bg-slate-50 p-2 rounded"><b class="text-slate-900">CSAT delta agent vs human</b><div class="text-slate-600">+0.1 (agent slightly higher)</div></div>
+            <div class="bg-slate-50 p-2 rounded"><b class="text-slate-900">Field tech NPS</b><div class="text-slate-600">+11 vs baseline</div></div>
+            <div class="bg-slate-50 p-2 rounded"><b class="text-slate-900">AWU per resolved outcome</b><div class="text-slate-600">$0.94 (under $1 target)</div></div>
+            <div class="bg-slate-50 p-2 rounded"><b class="text-slate-900">CSA career mobility</b><div class="text-slate-600">3.2× promotion rate vs pre-USP</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- THE THESIS -->
+    <div class="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-8 text-white">
+      <div class="text-xs font-bold uppercase tracking-wider text-orange-400 mb-2">The thesis</div>
+      <p class="text-xl leading-relaxed">We are not building an AI feature. We are re-platforming a service business. The platform-level moves in the next 36 months decide whether TechGuard is a category-defining MSP or a casualty of the category's redefinition.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========================================= -->
+<!--                  SCRIPT                   -->
+<!-- ========================================= -->
+<script>
+  // ====== Navigation ======
+  function nav(view) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + view).classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b => {
+      if (b.dataset.nav === view) {
+        b.classList.add('bg-slate-100', 'text-slate-900');
+        b.classList.remove('text-slate-600');
+      } else {
+        b.classList.remove('bg-slate-100', 'text-slate-900');
+        b.classList.add('text-slate-600');
+      }
+    });
+    if (view === 'demo') {
+      renderDemoStage();
+    }
+    window.scrollTo({top: 0, behavior: 'instant'});
+  }
+  // Highlight Home initially
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('[data-nav="home"]').classList.add('bg-slate-100', 'text-slate-900');
+  });
+
+  // ====== AROE live counter ======
+  let aroe = 87.4;
+  setInterval(() => {
+    aroe += (Math.random() * 0.04);
+    const el = document.getElementById('aroe-counter');
+    if (el) el.textContent = aroe.toFixed(1);
+  }, 5000);
+
+  // ====== Call timer ======
+  let callSec = 134;
+  setInterval(() => {
+    callSec++;
+    const el = document.getElementById('call-timer');
+    if (el) {
+      const m = String(Math.floor(callSec / 60)).padStart(2, '0');
+      const s = String(callSec % 60).padStart(2, '0');
+      el.textContent = `${m}:${s}`;
+    }
+  }, 1000);
+
+  // ====== Rohan approval ======
+  function approveRohanPlan(btn) {
+    btn.disabled = true;
+    btn.textContent = '✓ Approved';
+    btn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+    btn.classList.add('bg-emerald-600');
+    document.getElementById('rohan-approval-confirmation').style.display = 'flex';
+    document.getElementById('rohan-approval-confirmation').classList.add('slide-up');
+  }
+
+  // ====== Maria open job ======
+  function mariaOpenJob() {
+    alert("👷🏽‍♀️ Maria taps into the predictive NVR swap job.\n\nThe right phone shows the AR-overlay step-by-step procedure with pre-staged parts.\n\n(In the demo, you'd tap into this in real life. Here it's a single-screen mock — see the right-side phone frame for the in-job experience.)");
+  }
+
+  // ====== Canonical demo step-through ======
+  const demoSteps = [
+    {
+      time: 'T-72hr · Detection',
+      actor: 'agent',
+      title: 'Telemetry signal triggers the agent',
+      surface: 'Data Cloud streaming · no humans involved',
+      content: `
+        <div class="space-y-4">
+          <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div class="font-mono text-xs text-orange-700">DataCloud.streaming.subscribe('telemetry.nvr')</div>
+            <div class="mt-2 text-sm text-slate-700"><b>Predictive Maintenance Agent</b> observes the Endpoint Graph stream for RetailNorth Corp.</div>
+          </div>
+          <div class="bg-slate-50 rounded-lg p-4 font-mono text-xs space-y-1">
+            <div>📍 Site 4 · NVR cluster (3 units)</div>
+            <div class="text-rose-700">⚠ NVR-03 · SMART pass rate: 96% → 81% over 8hr (downward)</div>
+            <div class="text-rose-700">⚠ Rack thermal variance: +3.2°C vs baseline</div>
+            <div class="text-slate-600">→ Anomaly score: 0.87 · threshold breach: 0.85</div>
+            <div class="text-slate-600">→ Agent invocation: yes</div>
+          </div>
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+            <span class="font-bold text-blue-900">Why this matters:</span> <span class="text-slate-700">Today this signal is buried in PagerDuty noise. Tomorrow it triggers the first agent in a chain that prevents a P1 in 72hr.</span>
+          </div>
+        </div>`
+    },
+    {
+      time: 'T-71hr · Diagnosis',
+      actor: 'agent',
+      title: 'Agent reasons over the Endpoint Graph + RAG retrieval',
+      surface: 'Agentforce Planner + RAG · still no humans',
+      content: `
+        <div class="space-y-4">
+          <div class="bg-white border border-slate-200 rounded-lg p-4">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Agent reasoning trace</div>
+            <div class="space-y-2 text-sm">
+              <div class="flex gap-2"><span class="text-orange-600 font-bold">1.</span><span>Query Endpoint Graph: cluster topology · firmware versions · warranty · contract SLA</span></div>
+              <div class="flex gap-2"><span class="text-orange-600 font-bold">2.</span><span>Retrieve vendor advisories (hybrid search): <code class="bg-slate-100 px-1.5 rounded text-xs">NVR-23-411</code> matches — disk firmware vNG-2.4, 14% failure rate at sustained thermal &gt; 71°C</span></div>
+              <div class="flex gap-2"><span class="text-orange-600 font-bold">3.</span><span>Retrieve historical resolved cases (cross-encoder rerank): 7 prior matches in past 18mo · 6 progressed to hard failure within 96hr</span></div>
+              <div class="flex gap-2"><span class="text-orange-600 font-bold">4.</span><span>Compute outcome: confidence 91% · failure window ≤ 72hr · proceed to plan</span></div>
+            </div>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm">
+            <span class="font-bold text-emerald-900">Architectural note:</span> <span class="text-slate-700">Hybrid retrieval (dense + BM25) catches the vendor advisory ID; pure semantic search would miss "NVR-23-411" because alphanumerics are noise in embeddings.</span>
+          </div>
+        </div>`
+    },
+    {
+      time: 'T-71hr · Plan generated',
+      actor: 'agent',
+      title: 'Planner decomposes the plan; blast-radius classifier tags each step',
+      surface: 'Agentforce Planner + Policy layer',
+      content: `
+        <div class="space-y-4">
+          <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50">
+                <tr>
+                  <th class="text-left p-3 text-xs font-bold uppercase tracking-wider text-slate-600">Step</th>
+                  <th class="text-left p-3 text-xs font-bold uppercase tracking-wider text-slate-600">Action</th>
+                  <th class="text-left p-3 text-xs font-bold uppercase tracking-wider text-slate-600">Blast radius</th>
+                  <th class="text-left p-3 text-xs font-bold uppercase tracking-wider text-slate-600">Auth</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr><td class="p-3">1</td><td class="p-3">Trigger backup snapshot to cloud</td><td class="p-3"><span class="px-2 py-0.5 text-xs rounded bg-emerald-100 text-emerald-700 font-semibold">LOW</span></td><td class="p-3 text-emerald-700 font-semibold">Auto-approved</td></tr>
+                <tr><td class="p-3">2</td><td class="p-3">Pre-stage replacement NVR to Maria's truck</td><td class="p-3"><span class="px-2 py-0.5 text-xs rounded bg-emerald-100 text-emerald-700 font-semibold">LOW</span></td><td class="p-3 text-emerald-700 font-semibold">Auto-approved</td></tr>
+                <tr class="bg-amber-50"><td class="p-3">3</td><td class="p-3">Open preventive work order · dispatch Maria T-48hr</td><td class="p-3"><span class="px-2 py-0.5 text-xs rounded bg-amber-100 text-amber-700 font-semibold">MEDIUM</span></td><td class="p-3 text-amber-700 font-semibold">Needs Rohan</td></tr>
+                <tr class="bg-amber-50"><td class="p-3">4</td><td class="p-3">Draft client notification · Marcus Chen</td><td class="p-3"><span class="px-2 py-0.5 text-xs rounded bg-amber-100 text-amber-700 font-semibold">MEDIUM</span></td><td class="p-3 text-amber-700 font-semibold">Needs Rohan</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+            <span class="font-bold text-blue-900">Why blast-radius matters:</span> <span class="text-slate-700">Steps 1 & 2 are reversible internal ops. Steps 3 & 4 touch field labor cost + client trust — those cross the human-approval threshold. Trust Dial (per-tenant) governs the threshold itself.</span>
+          </div>
+        </div>`
+    },
+    {
+      time: 'T-71hr · 🤝 Handoff #1',
+      actor: 'handoff',
+      title: 'Agent → Rohan (ITOps)',
+      surface: 'Slack · #predictive-alerts',
+      handoffTo: 'rohan',
+      content: `
+        <div class="space-y-4">
+          <div class="bg-purple-50 border-2 border-purple-300 rounded-lg p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-2xl">🤝</span>
+              <div class="font-bold text-purple-900">Handoff #1 — agent surfaces in Rohan's Slack</div>
+            </div>
+            <div class="text-sm text-slate-700">Rohan gets a Slack notification with the predictive alert, the full plan, the reasoning trace, and one-click approve / edit / reject.</div>
+          </div>
+          <div class="bg-slate-900 rounded-lg p-4 text-white text-sm">
+            <div class="flex items-center gap-2 mb-2 text-xs text-slate-400">
+              <span>#predictive-alerts</span> · <span>14:08</span>
+            </div>
+            <div class="flex gap-3">
+              <div class="w-8 h-8 rounded gradient-agent flex items-center justify-center text-xs">🤖</div>
+              <div>
+                <div class="font-semibold">Predictive Maintenance Agent</div>
+                <div class="text-slate-300 mt-1">⚠️ Predictive failure detected · RetailNorth · Site 4 NVR-03 · 91% confidence · ≤72hr</div>
+                <div class="text-slate-300 mt-1">Plan ready. Backup snapshot already running. Truck dispatch and client comms need your sign-off.</div>
+                <div class="mt-2 flex gap-2">
+                  <span class="bg-orange-500 text-white px-3 py-1 rounded text-xs font-semibold">Approve plan</span>
+                  <span class="bg-white/10 text-white px-3 py-1 rounded text-xs">Edit comms</span>
+                  <span class="bg-white/10 text-white px-3 py-1 rounded text-xs">Reject</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm flex items-center justify-between">
+            <span><b class="text-emerald-900">Rohan's time investment:</b> ~90 seconds in Slack Canvas to review + approve</span>
+            <button onclick="nav('rohan')" class="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded font-semibold">See Rohan's actual screen →</button>
+          </div>
+        </div>`
+    },
+    {
+      time: 'T-71hr · Execution',
+      actor: 'agent',
+      title: 'Plan executes · client notified',
+      surface: 'Multi-system orchestration via MuleSoft Actions',
+      content: `
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+              <div class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">✓ Work order dispatched</div>
+              <div class="text-sm">WO-89472 → Maria's mobile · slot tomorrow 09:00–11:00 · NVR pre-staged truck bay 3</div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+              <div class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">✓ Client notified</div>
+              <div class="text-sm">Email + Slack to Marcus Chen with TechGuard branding · Rohan listed as named owner</div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+              <div class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">✓ Depot inventory locked</div>
+              <div class="text-sm">Replacement NVR reserved from Cincinnati depot · audit log entry</div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+              <div class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">✓ Route re-optimized</div>
+              <div class="text-sm">Maria's day plan auto-shuffled to fit the new preventive job · ETA saved: 38 min</div>
+            </div>
+          </div>
+          <div class="bg-slate-100 rounded-lg p-3 text-xs font-mono text-slate-700">
+            <div>POST /mulesoft/fieldservice/workorder · 201 Created</div>
+            <div>POST /agentforce/notify/email · 200 OK</div>
+            <div>POST /mulesoft/depot/reserve · 200 OK</div>
+            <div>POST /agentforce/route/optimize · 200 OK</div>
+          </div>
+        </div>`
+    },
+    {
+      time: 'T-48hr · 🤝 Handoff #2',
+      actor: 'handoff',
+      title: 'Agent → Maria (Field Tech)',
+      surface: 'Field Service Mobile',
+      handoffTo: 'maria',
+      content: `
+        <div class="space-y-4">
+          <div class="bg-emerald-50 border-2 border-emerald-300 rounded-lg p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-2xl">🤝</span>
+              <div class="font-bold text-emerald-900">Handoff #2 — Maria arrives at Site 4</div>
+            </div>
+            <div class="text-sm text-slate-700">Her mobile already has: site map · NVR location · replacement unit pre-loaded · 7-step AR-overlay swap procedure · post-swap verification checklist.</div>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-lg p-4">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">What Maria sees on arrival</div>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div class="bg-slate-50 rounded p-3">
+                <div class="font-semibold">📍 Pre-arrival briefing</div>
+                <div class="text-xs text-slate-600 mt-1">NVR cluster predicted to fail in 48hr. Replacement in your truck. Backup complete. Client briefed by Rohan.</div>
+              </div>
+              <div class="bg-slate-50 rounded p-3">
+                <div class="font-semibold">🎯 Diagnostic hypothesis</div>
+                <div class="text-xs text-slate-600 mt-1">Most likely cause: disk 2 firmware vNG-2.4 thermal-induced degradation. Check disk 2 first.</div>
+              </div>
+              <div class="bg-slate-50 rounded p-3">
+                <div class="font-semibold">📸 AR-overlay procedure</div>
+                <div class="text-xs text-slate-600 mt-1">7-step swap procedure with live camera annotations on the rack.</div>
+              </div>
+              <div class="bg-slate-50 rounded p-3">
+                <div class="font-semibold">🎤 Voice documentation</div>
+                <div class="text-xs text-slate-600 mt-1">Voice-dictation post-step. Agent drafts the visit report.</div>
+              </div>
+            </div>
+          </div>
+          <div class="text-sm flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <span><b class="text-blue-900">Time on-site:</b> 45 minutes (vs. 90 minutes today for an unscheduled emergency call)</span>
+            <button onclick="nav('maria')" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded font-semibold">See Maria's actual screen →</button>
+          </div>
+        </div>`
+    },
+    {
+      time: 'T-47hr · Verification',
+      actor: 'agent',
+      title: 'Post-swap telemetry verification · agent closes the loop',
+      surface: 'Endpoint Graph telemetry stream',
+      content: `
+        <div class="space-y-4">
+          <div class="bg-white border border-slate-200 rounded-lg p-4">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Verification telemetry · auto-run by agent</div>
+            <div class="space-y-2 text-sm">
+              <div class="flex items-center justify-between"><span>New NVR-03 online · firmware vNG-2.5</span><span class="text-emerald-700 font-semibold">✓</span></div>
+              <div class="flex items-center justify-between"><span>16/16 cameras streaming to NVR-03</span><span class="text-emerald-700 font-semibold">✓</span></div>
+              <div class="flex items-center justify-between"><span>Cloud replication lag &lt; 2s</span><span class="text-emerald-700 font-semibold">✓ (1.4s)</span></div>
+              <div class="flex items-center justify-between"><span>SMART pass rate</span><span class="text-emerald-700 font-semibold">✓ (100%)</span></div>
+              <div class="flex items-center justify-between"><span>Thermal variance vs baseline</span><span class="text-emerald-700 font-semibold">✓ (within range)</span></div>
+              <div class="flex items-center justify-between"><span>Cluster failover test (simulated power loss)</span><span class="text-emerald-700 font-semibold">✓ (sub-2s failover)</span></div>
+            </div>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm">
+            <span class="font-bold text-emerald-900">Work order closed:</span> <span class="text-slate-700">WO-89472 marked complete by agent · client sent "service performed, no impact to your operations" note.</span>
+          </div>
+        </div>`
+    },
+    {
+      time: 'T-0 · The failure that wasn\'t',
+      actor: 'no-event',
+      title: 'The disk would have hard-failed here. Customer never knew.',
+      surface: 'Counterfactual moment',
+      content: `
+        <div class="space-y-4">
+          <div class="text-center py-12">
+            <div class="text-7xl mb-4 opacity-20">⏰</div>
+            <div class="text-3xl font-bold text-slate-900 mb-2">No incident.</div>
+            <div class="text-lg text-slate-600 max-w-xl mx-auto">The original NVR-03 would have hard-failed at this moment. P1 ticket. Emergency truck roll. ~$42K SLA penalty exposure. Marcus Chen's morning ruined.</div>
+            <div class="text-lg text-slate-600 max-w-xl mx-auto mt-3">Instead: Marcus is in a meeting. Site 4 is recording. Maria's already on stop 3.</div>
+          </div>
+          <div class="grid grid-cols-3 gap-3 text-sm">
+            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-center">
+              <div class="text-2xl font-bold text-emerald-700">$42K</div>
+              <div class="text-emerald-600">SLA penalty avoided</div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-center">
+              <div class="text-2xl font-bold text-emerald-700">1</div>
+              <div class="text-emerald-600">Truck roll (preventive, not emergency)</div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-center">
+              <div class="text-2xl font-bold text-emerald-700">0</div>
+              <div class="text-emerald-600">CSA tickets opened</div>
+            </div>
+          </div>
+        </div>`
+    },
+    {
+      time: 'T+24hr · 🤝 Handoff #3',
+      actor: 'handoff',
+      title: 'Insight Loop · Agent → Rohan (rule learned)',
+      surface: 'Slack · #predictive-alerts',
+      handoffTo: 'rohan',
+      content: `
+        <div class="space-y-4">
+          <div class="bg-purple-50 border-2 border-purple-300 rounded-lg p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-2xl">🧠</span>
+              <div class="font-bold text-purple-900">Handoff #3 — agent proposes a tenant-wide rule</div>
+            </div>
+            <div class="text-sm text-slate-700">This is the closed-loop learning that compounds the system's value over time. One incident becomes an organization-wide capability.</div>
+          </div>
+          <div class="bg-slate-900 rounded-lg p-4 text-white text-sm">
+            <div class="text-xs text-slate-400 mb-2">#predictive-alerts · 1d later</div>
+            <div class="flex gap-3">
+              <div class="w-8 h-8 rounded bg-emerald-600 flex items-center justify-center text-xs">🤖</div>
+              <div>
+                <div class="font-semibold">Insight Loop Agent</div>
+                <div class="text-slate-300 mt-1">💡 The SMART + thermal signature you approved yesterday matched <b>2 other NVR clusters</b> across our tenant base. Suggest extending the monitoring rule.</div>
+                <div class="mt-2 flex gap-2">
+                  <span class="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-semibold">Roll out tenant-wide</span>
+                  <span class="bg-white/10 text-white px-3 py-1 rounded text-xs">Pilot to 10 tenants</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
+            <div class="font-bold text-blue-900 mb-1">This is the compounding moment.</div>
+            <div class="text-slate-700">One Rohan approval becomes a rule that protects 2 (or 200) other tenants. This is why solving Pain #1 (Endpoint Graph) and Pain #10 (closed-loop learning) compounds — they're how the platform gets smarter without humans typing more.</div>
+          </div>
+          <div class="bg-slate-900 rounded-lg p-5 text-white text-center">
+            <div class="text-xs font-bold uppercase tracking-wider text-orange-400 mb-2">End of the journey</div>
+            <div class="text-lg">Three personas. Three AI-to-human handoffs. Zero customer-facing incident.</div>
+            <div class="mt-3"><button onclick="demoReset()" class="bg-orange-500 px-5 py-2 rounded-lg font-semibold text-sm">⟲ Run it again</button> <button onclick="nav('metrics')" class="bg-white/15 px-5 py-2 rounded-lg font-semibold text-sm ml-2">View metrics →</button></div>
+          </div>
+        </div>`
+    }
+  ];
+
+  let demoCursor = 0;
+
+  function renderDemoStage() {
+    const step = demoSteps[demoCursor];
+    const stage = document.getElementById('demo-stage');
+    let actorBadge = '';
+    let actorColor = '';
+    if (step.actor === 'agent') { actorBadge = 'AGENT'; actorColor = 'bg-orange-100 text-orange-700'; }
+    else if (step.actor === 'handoff') { actorBadge = '🤝 HANDOFF'; actorColor = 'bg-purple-100 text-purple-700'; }
+    else if (step.actor === 'no-event') { actorBadge = 'COUNTERFACTUAL'; actorColor = 'bg-slate-100 text-slate-700'; }
+    stage.innerHTML = `
+      <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <div class="text-xs font-mono text-slate-500">${step.time}</div>
+          <div class="text-xl font-bold text-slate-900 mt-0.5">${step.title}</div>
+          <div class="text-xs text-slate-500 mt-0.5">Surface: ${step.surface}</div>
+        </div>
+        <div class="text-right">
+          <span class="text-xs px-2.5 py-1 rounded-full ${actorColor} font-bold">${actorBadge}</span>
+          <div class="text-xs text-slate-500 mt-2">Step ${demoCursor + 1} of ${demoSteps.length}</div>
+        </div>
+      </div>
+      <div class="p-6 fade-in">${step.content}</div>
+    `;
+
+    // Update timeline visual
+    demoSteps.forEach((_, i) => {
+      const el = document.getElementById('demo-step-' + i);
+      if (!el) return;
+      el.classList.remove('active', 'completed', 'pending');
+      if (i < demoCursor) el.classList.add('completed');
+      else if (i === demoCursor) el.classList.add('active');
+      else el.classList.add('pending');
+    });
+  }
+
+  function demoNext() {
+    if (demoCursor < demoSteps.length - 1) {
+      demoCursor++;
+      renderDemoStage();
+    }
+  }
+  function demoPrev() {
+    if (demoCursor > 0) {
+      demoCursor--;
+      renderDemoStage();
+    }
+  }
+  function demoReset() {
+    demoCursor = 0;
+    renderDemoStage();
+  }
+
+  // Keyboard nav for demo
+  document.addEventListener('keydown', (e) => {
+    if (!document.getElementById('view-demo').classList.contains('active')) return;
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); demoNext(); }
+    if (e.key === 'ArrowLeft') { demoPrev(); }
+    if (e.key === 'Home' || e.key === 'r') { demoReset(); }
+  });
+
+  // Render the first demo stage on page load so it's ready
+  renderDemoStage();
+</script>
+
+</body>
+</html>
