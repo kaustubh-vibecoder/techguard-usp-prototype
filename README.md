@@ -5,7 +5,7 @@
 
 ## 🔗 Live demo
 
-**[Open the prototype →](#)** *(replace with your GitHub Pages / hosted URL)*
+**[Open the prototype →]https://kaustubh-vibecoder.github.io/techguard-usp-prototype/*
 
 Best viewed in **Chrome or Edge** on desktop at **1440×900 or higher**.
 
