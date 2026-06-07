@@ -138,8 +138,8 @@ An **offline-capable version** with Tailwind inlined is available on request.
 
 ## Author
 
-**Kshitij Chaudhary**
-Submission date: June 2026
+**Kaustubh Chaudhary**
+Submission date: 7 June 2026
 
 ---
 
