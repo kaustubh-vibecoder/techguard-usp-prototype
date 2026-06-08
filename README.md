@@ -132,7 +132,7 @@ An **offline-capable version** with Tailwind inlined is available on request.
 - **Product Strategy & Specification Document** — 11-section strategy document covering strategic context, persona pain prioritization, phased solutions roadmap, technical architecture, tradeoffs, metrics, operating plan, and risks-to-validate
 - **Presentation Deck (<20 slides)** — executive walkthrough intended for the live presentation round
 
-*Both delivered separately by email.*
+*Both delivered separately by email as well as included in this repo.*
 
 ---
 
